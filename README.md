@@ -1,16 +1,27 @@
-# Project 02: Docker CI with GitHub Actions
+# Project 02: Docker CI and Delivery
 
-A Dockerized Nginx website with a GitHub Actions workflow that builds the image and checks that the page is served correctly.
+A static Nginx website packaged as a Docker image. GitHub Actions builds and checks the image on pushes and pull requests. After a successful push to `main`, the workflow publishes the image to GitHub Container Registry (GHCR). The published image is then deployed to an Ubuntu VM with a deliberate manual step.
 
 ## Project structure
 
-- `Dockerfile` builds the Nginx image.
-- `site/index.html` is the web page served by Nginx.
-- `.github/workflows/ci.yml` builds and tests the image on pushes and pull requests.
+- `Dockerfile` builds the Nginx image and labels its source repository.
+- `site/index.html` is the page served by Nginx.
+- `.github/workflows/ci.yml` builds and checks the image, then publishes it to GHCR on pushes to `main`.
 
-## Run locally
+## CI and image publishing
 
-Build the image:
+On pushes and pull requests, GitHub Actions builds the image, starts a test container, and checks that the served page contains `Docker CI pipeline`.
+
+When a push to `main` passes those checks, the workflow publishes two GHCR tags:
+
+- `latest` for the current published image
+- The commit SHA, to identify the source revision for that image
+
+The package is public and can be pulled without signing in.
+
+## Deploy to the Ubuntu VM
+
+Pull the published image:
 
 ```bash
-sudo docker build -t project-02-docker-ci:local .
+sudo docker pull ghcr.io/zaidmohd6521-lang/project-02-docker-ci:latest
