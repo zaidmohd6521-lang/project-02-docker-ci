@@ -1,12 +1,15 @@
-name: Docker CI
+name: Docker CI and Delivery
 
 on:
   push:
   pull_request:
 
 jobs:
-  build-and-test:
+  build-test-publish:
     runs-on: ubuntu-22.04
+    permissions:
+      contents: read
+      packages: write
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -30,3 +33,15 @@ jobs:
       - name: Remove test container
         if: always()
         run: docker rm -f ci-web || true
+
+      - name: Publish image to GHCR
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          IMAGE_NAME: ghcr.io/zaidmohd6521-lang/project-02-docker-ci
+        run: |
+          echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+          docker tag project-02-docker-ci:test "$IMAGE_NAME:$GITHUB_SHA"
+          docker tag project-02-docker-ci:test "$IMAGE_NAME:latest"
+          docker push "$IMAGE_NAME:$GITHUB_SHA"
+          docker push "$IMAGE_NAME:latest"
